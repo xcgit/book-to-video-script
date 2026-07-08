@@ -32,9 +32,31 @@ book-to-video-script/
 ├── references/
 │   ├── script-formats.md            # 短/中/长视频脚本模板与标注规范
 │   └── hook-story-bank.md           # 钩子库 + 吸引力技法 + 故事增补规则 + 自检清单
-└── scripts/
-    └── build_script.py              # 骨架生成（仅标准库，无需联网）
+├── scripts/
+│   └── build_script.py              # 骨架生成（仅标准库，无需联网）
+└── examples/
+    └── 示例-达尔文投资-第二集-A股转译.md   # 基于 book-squeezer 报告生成的 10 分钟长视频脚本样例
 ```
+
+## 自动打包（CI）
+
+仓库内置 `.github/workflows/package.yml`：
+
+- 推送 `main` → 自动把技能根目录打包成 `book-to-video-script.zip`，作为 90 天有效期的构建产物上传（Actions 页面可下载）。
+- 推送 tag（`v*`）→ 额外创建 GitHub Release，把 zip 作为下载附件，并自动生成发布说明。
+- 也可在 Actions 页面手动 `Run workflow` 触发。
+
+打包自动排除 `.git` / `.github` / `__pycache__` / `*.pyc` / 本地密钥，保证装进 WorkBuddy 的技能包干净（仓库根目录即技能根目录，`.github` 不会进安装包）。
+
+发正式版本：
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+## 示例
+
+`examples/` 里放了一篇真实产出样例——《我从达尔文那里学到的投资知识》第二集（六大禁区剩余三条 + A 股排雷清单）的 10 分钟长视频脚本，含 `[画面]/[口播]/[时长]` 标注与护栏自检清单，可直接对照 SKILL.md 的流程看效果。
 
 ## 与 book-squeezer 的关系
 

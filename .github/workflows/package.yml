@@ -1,0 +1,62 @@
+name: Package Skill
+
+# 自动把 book-to-video-script 技能打包成可安装的 zip：
+#   - 推送到 main：构建并上传为 90 天有效期的构建产物（artifact）
+#   - 推送 tag（v*）：额外创建一个 GitHub Release，把 zip 作为下载附件
+#   - 也可在 Actions 页面手动触发（workflow_dispatch）
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 创建 Release 需要写权限
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine package version
+        id: version
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=main-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package skill into zip
+        run: |
+          # 打包仓库根目录（即技能根目录），排除 VCS / CI / 缓存 / 本地密钥
+          zip -r "book-to-video-script.zip" . \
+            -x '.git/*' -x '.git/**' \
+            -x '.github/*' -x '.github/**' \
+            -x '__pycache__/*' -x '__pycache__/**' \
+            -x '*.pyc' -x '*.pyo' -x '*.egg-info/*' -x '*.egg-info/**' \
+            -x '.DS_Store' -x 'Thumbs.db' \
+            -x '*.ghtoken' -x '*.ghcreds' -x '*.ghlogin'
+          echo "== packaged contents =="
+          unzip -l book-to-video-script.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-to-video-script-${{ steps.version.outputs.version }}
+          path: book-to-video-script.zip
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: book-to-video-script.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
